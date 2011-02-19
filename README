@@ -1,0 +1,5 @@
+Bridge between RabbitMQ and Redis.
+Implemented as RabbitMQ plugin.
+
+See build instructions at:
+http://www.rabbitmq.com/plugin-development.html

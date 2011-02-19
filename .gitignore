@@ -1,0 +1,6 @@
+build/
+deps/erldis/ebin
+deps/erldis/
+dist/
+ebin/*.app
+ebin/*.beam
