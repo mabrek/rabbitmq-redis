@@ -4,3 +4,5 @@ deps.mk
 dist/
 ebin/*.app
 ebin/*.beam
+test_ebin/
+tmp/
