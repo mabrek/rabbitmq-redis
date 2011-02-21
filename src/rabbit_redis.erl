@@ -1,16 +1,10 @@
 -module(rabbit_redis).
 
 -behaviour(application).
--export([start/0, stop/0, start/2, stop/1]).
-
-start() ->
-    ok.
-
-stop() ->
-    ok.
+-export([start/2, stop/1]).
 
 start(_, _) ->
-    ok.
+    rabbit_redis_sup:start_link().
 
 stop(_) ->
     ok.
