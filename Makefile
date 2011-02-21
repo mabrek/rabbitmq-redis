@@ -1,9 +1,9 @@
 PACKAGE=rabbitmq-redis
 APPNAME=rabbit_redis
 DEPS=rabbitmq-erlang-client
-#INTERNAL_DEPS=erldis
+INTERNAL_DEPS=erldis
 DEPS_FILE=deps.mk
-TEST_APPS=amqp_client
+TEST_APPS=amqp_client erldis
 START_RABBIT_IN_TESTS=true
 TEST_COMMANDS=rabbit_redis_test:test()
 
