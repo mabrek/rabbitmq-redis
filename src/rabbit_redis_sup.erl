@@ -19,4 +19,4 @@ init([]) ->
               worker,
               [rabbit_redis_worker]
              },
-    {ok, {{one_for_one, 1, 10}, [Worker]}.
+    {ok, {{one_for_one, 1, 10}, [Worker]}}.
