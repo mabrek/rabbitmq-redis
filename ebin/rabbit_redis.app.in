@@ -1,0 +1,10 @@
+{application, rabbit_redis,
+ [{description, "Redis bridge for RabbitMQ"},
+  {vsn, "%%VSN%%"},
+  {modules, [
+    rabbit_redis
+  ]},
+  {registered, []},
+  {env, []},
+  {mod, {rabbit_redis, []}},
+  {applications, [kernel, stdlib, rabbit]}]}.

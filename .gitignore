@@ -1,6 +1,6 @@
 build/
-deps/erldis/ebin
-deps/erldis/
+deps/
+deps.mk
 dist/
 ebin/*.app
 ebin/*.beam

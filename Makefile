@@ -1,4 +1,5 @@
 PACKAGE=rabbitmq-redis
+APPNAME=rabbit_redis
 DEPS=rabbitmq-erlang-client
 #INTERNAL_DEPS=erldis
 DEPS_FILE=deps.mk
