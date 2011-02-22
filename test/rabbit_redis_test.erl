@@ -5,13 +5,14 @@ test() ->
     ok = application:start(rabbit_redis),
     ok = application:stop(rabbit_redis),
     
+    {ok, RedisPublisher} = erldis:connect(),
     Redis = erldis_sup:client(),
     RedisChannel = <<"channel">>,
     Payload = <<"payload">>,
     erldis:subscribe(Redis, RedisChannel, self()),
-    erldis:publish(Redis, RedisChannel, Payload),
+    1 = erldis:publish(RedisPublisher, RedisChannel, Payload),
     receive
-        {message, Payload, Channel} -> 
+        {message, Channel, Payload} -> 
             ok
     after
         100 ->
