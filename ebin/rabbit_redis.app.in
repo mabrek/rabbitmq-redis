@@ -7,4 +7,4 @@
   {registered, []},
   {env, []},
   {mod, {rabbit_redis, []}},
-  {applications, [kernel, stdlib, rabbit, amqp_client, erldis]}]}.
+  {applications, [kernel, stdlib, rabbit, amqp_client]}]}.
