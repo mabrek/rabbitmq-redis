@@ -12,7 +12,7 @@ start_link(Bridges) ->
     supervisor2:start_link({local, ?MODULE}, ?MODULE, [child_specs(Bridges)]).
 
 init([Childs]) ->
-    {ok, {{one_for_one, 10, 10}, [Childs]}}.
+    {ok, {{one_for_one, 10, 10}, Childs}}.
 
 child_specs(Bridges) ->
     lists:map(fun child_spec/1, Bridges).
