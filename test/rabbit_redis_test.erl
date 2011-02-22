@@ -5,10 +5,12 @@
 -define(REDIS_PORT, 6379).
 
 test() ->
-    start_stop(),
-    redis_only_pubsub().
-
-start_stop() ->
+    redis_only_pubsub(),
+    application:set_env(rabbit_redis, bridges,
+                        [
+                         {subscribe, [<<"channel">>], <<"test_exchange">>}
+                        ]
+                       ),
     ok = application:start(rabbit_redis),
     ok = application:stop(rabbit_redis).
 

@@ -3,8 +3,13 @@
 -behaviour(application).
 -export([start/2, stop/1]).
 
-start(_, _) ->
-    rabbit_redis_sup:start_link().
+start(normal, []) ->
+    rabbit_redis_sup:start_link(
+      case application:get_env(bridges) of
+          {ok, Bridges} -> Bridges;
+          undefined -> []
+      end
+     ).
 
 stop(_) ->
     ok.
