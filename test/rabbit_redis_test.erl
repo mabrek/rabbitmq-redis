@@ -13,8 +13,10 @@ test() ->
     1 = erldis:publish(RedisPublisher, RedisChannel, Payload),
     receive
         {message, Channel, Payload} -> 
-            ok
+            ok;
+        BadResult ->
+            throw({bad_result, BadResult})
     after
         100 ->
-             throw(timeout)
+            throw(timeout)
     end.
