@@ -27,8 +27,9 @@ $(LIB_PACKAGE_DIR): $(CHECKOUT_DIR)
 	cp -r $< $@
 
 $(CHECKOUT_DIR):
-	git clone $(GIT_UPSTREAM) $@
-	(cd $@; git checkout $(REVISION))
+	git clone $(GIT_UPSTREAM) $@-tmp
+	(cd $@-tmp; git checkout $(REVISION))
+	cd $@-tmp && patch -p1 < ../rm-gen-server2.patch && cd .. && mv $@-tmp $@
 
 %.ez: $(LIB_PACKAGE_DIR)
 	$(MAKE) -C $(LIB_PACKAGE_DIR) clean all
