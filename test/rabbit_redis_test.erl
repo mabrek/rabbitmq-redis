@@ -18,6 +18,7 @@ test() ->
                         ]
                        ),
     ok = application:start(rabbit_redis),
+    receive after 1000 -> ok end,
     ok = application:stop(rabbit_redis).
 
 redis_only_pubsub() ->
