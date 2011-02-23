@@ -23,12 +23,19 @@ handle_call(_Request, _From, State) ->
 
 handle_cast(init, State = #state{config = Config}) ->
     process_flag(trap_exit, true),
-    {noreply, State}.
+    RedisConfig = proplists:get_value(redis, Config),
+    % TODO select DB
+    RedisConnection = erldis_client:start_link(
+                        proplists:get_value(host, RedisConfig),
+                        proplists:get_value(port, RedisConfig)),
+    [erldis:subscribe(RedisConnection, C, self()) || C <- proplists:get_value(channels, RedisConfig)],
+    {noreply, State#state{redis_connection = RedisConnection}}.
 
 handle_info(_Info, State) ->
     {noreply, State}.
 
-terminate(_Reason, _State) ->
+terminate(_Reason, State = #state{redis_connection = RedisConnection}) ->
+    catch erldis:quit(RedisConnection),
     ok.
 
 code_change(_OldVsn, State, _Extra) ->
