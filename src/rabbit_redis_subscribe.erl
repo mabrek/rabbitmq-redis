@@ -3,25 +3,25 @@
 -behaviour(gen_server2).
 
 %% API
--export([start_link/2]).
+-export([start_link/1]).
 
 %% callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
          terminate/2, code_change/3]).
 
--record(state, {redis_connection, redis_channels, rabbit_connection, rabbit_channel, rabbit_exchange}).
+-record(state, {redis_connection, rabbit_connection, rabbit_channel, config}).
 
-start_link(Channels, Exchange) ->
-    gen_server2:start_link({local, ?MODULE}, ?MODULE, [Channels, Exchange], []).
+start_link(Config) ->
+    gen_server2:start_link({local, ?MODULE}, ?MODULE, Config, []).
 
-init([Channels, Exchange]) ->
+init(Config) ->
     gen_server2:cast(self(), init),
-    {ok, #state{redis_channels = Channels, rabbit_exchange = Exchange}}.
+    {ok, #state{config = Config}}.
 
 handle_call(_Request, _From, State) ->
     {noreply, State}.
 
-handle_cast(init, State = #state{redis_channels = Channels, rabbit_exchange = Exchange}) ->
+handle_cast(init, State = #state{config = Config}) ->
     process_flag(trap_exit, true),
     {noreply, State}.
 

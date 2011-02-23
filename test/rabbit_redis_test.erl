@@ -9,7 +9,12 @@ test() ->
     % TODO start/stop without config
     application:set_env(rabbit_redis, bridges,
                         [
-                         {subscribe, [<<"channel">>], <<"test_exchange">>}
+                         [{type, subscribe},
+                          {redis, [{host, ?REDIS_HOST},
+                                   {port, ?REDIS_PORT},
+                                   {channels, [<<"channel">>]}
+                                  ]},
+                          {rabbit, [{exchange, <<"test_exchange">>}]}]
                         ]
                        ),
     ok = application:start(rabbit_redis),

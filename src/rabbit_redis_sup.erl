@@ -9,17 +9,20 @@
 -export([init/1]).
 
 start_link(Bridges) ->
-    supervisor2:start_link({local, ?MODULE}, ?MODULE, [child_specs(Bridges)]).
+    % TODO empty bridges
+    supervisor2:start_link({local, ?MODULE}, ?MODULE, child_specs(Bridges)).
 
-init([Childs]) ->
+init(Childs) ->
+    % TODO delayed restart
     {ok, {{one_for_one, 10, 10}, Childs}}.
 
 child_specs(Bridges) ->
     lists:map(fun child_spec/1, Bridges).
 
-child_spec({subscribe, Channels, Exchange}) ->
+child_spec(Config) ->
+    % TODO use type from config to determine module
     {rabbit_redis_subscribe,
-     {rabbit_redis_subscribe, start_link, [Channels, Exchange]},
+     {rabbit_redis_subscribe, start_link, [Config]},
      transient,
      16#ffffffff,
      worker,
