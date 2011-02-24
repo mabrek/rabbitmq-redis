@@ -1,8 +1,13 @@
 -module(rabbit_redis_test).
+
+-include("amqp_client.hrl").
+
 -export([test/0]).
 
 -define(REDIS_HOST, "localhost").
 -define(REDIS_PORT, 6379).
+-define(CHANNEL, <<"channel">>).
+-define(EXCHANGE, <<"test_exchange">>).
 
 test() ->
     redis_only_pubsub(),
@@ -12,9 +17,15 @@ test() ->
                          [{type, subscribe},
                           {redis, [{host, ?REDIS_HOST},
                                    {port, ?REDIS_PORT},
-                                   {channels, [<<"channel">>]}
+                                   {channels, [?CHANNEL]}
                                   ]},
-                          {rabbit, [{exchange, <<"test_exchange">>}]}]
+                          {rabbit, [{declarations, ['exchange.declare',
+                                                    [{exchange, ?EXCHANGE},
+                                                     {type, <<"direct">>},
+                                                     durable
+                                                    ]]},
+                                    {publish_fields, [{exchange, ?EXCHANGE}]}
+                                   ]}
                         ]
                        ),
     ok = application:start(rabbit_redis),

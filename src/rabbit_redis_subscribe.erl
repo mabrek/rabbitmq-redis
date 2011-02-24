@@ -1,5 +1,7 @@
 -module(rabbit_redis_subscribe).
 
+-include("amqp_client.hrl").
+
 -behaviour(gen_server2).
 
 %% API
@@ -23,20 +25,56 @@ handle_call(_Request, _From, State) ->
 
 handle_cast(init, State = #state{config = Config}) ->
     process_flag(trap_exit, true),
+
     RedisConfig = proplists:get_value(redis, Config),
     % TODO select DB
     {ok, RedisConnection} = erldis_client:start_link(
-                        proplists:get_value(host, RedisConfig),
-                        proplists:get_value(port, RedisConfig)),
-    [erldis:subscribe(RedisConnection, C, self()) || C <- proplists:get_value(channels, RedisConfig)],
-    {noreply, State#state{redis_connection = RedisConnection}}.
+                              proplists:get_value(host, RedisConfig),
+                              proplists:get_value(port, RedisConfig)),
+    [erldis:subscribe(RedisConnection, C, self()) 
+     || C <- proplists:get_value(channels, RedisConfig)],
 
-handle_info(_Info, State) ->
-    {noreply, State}.
+    RabbitConfig = proplists:get_value(rabbit, Config),
+    {ok, RabbitConnection} = amqp_connection:start(direct),
+    link(RabbitConnection),
+    {ok, RabbitChannel} = amqp_connection:open_channel(RabbitConnection),
+    resource_declarations(proplists:get_value(declarations, RabbitConfig),
 
-terminate(_Reason, State = #state{redis_connection = RedisConnection}) ->
-    catch erldis:quit(RedisConnection),
+    {noreply, State#state{redis_connection = RedisConnection, 
+                          rabbit_connection = RabbitConnection,
+                          rabbit_channel = RabbitChannel}}.
+
+handle_info({'EXIT', RabbitConnection, Reason}, 
+            State = #state{rabbit_connection = RabbitConnection}) ->
+    {stop, {rabbit_connection_died, Reason}, State).
+
+handle_info({'EXIT', RedisConnection, Reason},
+            State = #state{redis_connection = RedisConnection}) ->
+    {stop, {redis_connection_died, Reason}, State).
+
+terminate(_Reason, State) ->
+    catch erldis:quit(State#state.redis_connection),
+    catch amqp_channel:close(State#state.rabbit_channel),
+    catch amqp_connection:close(State#state.rabbit_connection),
     ok.
 
 code_change(_OldVsn, State, _Extra) ->
     {ok, State}.
+
+%% internals
+
+resource_declarations(Methods) when is_list(Methods) ->
+    resource_declarations(Methods, []);
+
+resource_declarations([{Method, Props} | Rest], Acc) ->
+    Names = rabbit_framing_amqp_0_9_1:method_fieldnames(Method),
+    Declaration = lists:foldl(
+                    fun({K, V}, R) ->
+                            setelement(, R, V),
+                            end,
+                    rabbit_framing_amqp_0_9_1:method_record(Method),
+                    Props),
+    resource_declarations(Rest, [Declaration | Acc]);
+
+resource_declatations([], Acc) ->
+    Acc.
