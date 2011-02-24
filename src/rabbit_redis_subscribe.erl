@@ -25,7 +25,7 @@ handle_cast(init, State = #state{config = Config}) ->
     process_flag(trap_exit, true),
     RedisConfig = proplists:get_value(redis, Config),
     % TODO select DB
-    RedisConnection = erldis_client:start_link(
+    {ok, RedisConnection} = erldis_client:start_link(
                         proplists:get_value(host, RedisConfig),
                         proplists:get_value(port, RedisConfig)),
     [erldis:subscribe(RedisConnection, C, self()) || C <- proplists:get_value(channels, RedisConfig)],
