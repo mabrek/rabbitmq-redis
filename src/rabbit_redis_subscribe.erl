@@ -21,6 +21,9 @@ init(Config) ->
     gen_server2:cast(self(), init),
     {ok, #state{config = Config}}.
 
+handle_call(ping, _From, State) ->
+    {reply, pong, State};
+
 handle_call(_Request, _From, State) ->
     {noreply, State}.
 
