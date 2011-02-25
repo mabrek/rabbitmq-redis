@@ -74,8 +74,9 @@ subscribe() ->
     erldis:quit(Redis),
 
     receive
-        {#'basic.deliver'{ consumer_tag = CTag, routing_key = ?CHANNEL},
-         #amqp_msg{ payload = <<1234>>}} -> ok
+        {#'basic.deliver'{ consumer_tag = CTag, exchange = ?EXCHANGE,
+                         routing_key = ?CHANNEL}, 
+         #amqp_msg{ payload = <<1234>> }} -> ok
     after ?TIMEOUT -> throw(timeout)
     end,
 
