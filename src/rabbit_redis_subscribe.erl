@@ -73,7 +73,7 @@ resource_declarations([{Method, Props} | Rest], Acc) ->
     Names = rabbit_framing_amqp_0_9_1:method_fieldnames(Method),
     {IndexedNames, _Idx} = lists:foldl(
                              fun(Name, {Dict, Idx}) ->
-                                     {dict:append(Name, Idx, Dict),
+                                     {dict:store(Name, Idx, Dict),
                                       Idx + 1}
                                      end,
                              {dict:new(), 2},
