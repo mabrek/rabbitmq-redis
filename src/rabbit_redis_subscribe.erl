@@ -47,6 +47,9 @@ handle_cast(init, State = #state{config = Config}) ->
                           rabbit_connection = RabbitConnection,
                           rabbit_channel = RabbitChannel}}.
 
+handle_info({message, Channel, Payload}, State) ->
+    {noreply, State};
+
 handle_info({'EXIT', RabbitConnection, Reason}, 
             State = #state{rabbit_connection = RabbitConnection}) ->
     {stop, {rabbit_connection_died, Reason}, State};
@@ -71,20 +74,23 @@ resource_declarations(Declarations) ->
 
 resource_declarations([{Method, Props} | Rest], Acc) ->
     Names = rabbit_framing_amqp_0_9_1:method_fieldnames(Method),
+    Record = rabbit_framing_amqp_0_9_1:method_record(Method),
+    resource_declarations(Rest, [set_fields(Props, Names, Record) | Acc]);
+
+resource_declarations([], Acc) ->
+    Acc.
+
+set_fields(Props, Names, Record) ->
     {IndexedNames, _Idx} = lists:foldl(
                              fun(Name, {Dict, Idx}) ->
                                      {dict:store(Name, Idx, Dict),
                                       Idx + 1}
-                                     end,
+                             end,
                              {dict:new(), 2},
                              Names),
-    Declaration = lists:foldl(
-                    fun({K, V}, R) ->
-                            setelement(dict:fetch(K, IndexedNames), R, V)
-                            end,
-                    rabbit_framing_amqp_0_9_1:method_record(Method),
-                    proplists:unfold(Props)),
-    resource_declarations(Rest, [Declaration | Acc]);
-
-resource_declarations([], Acc) ->
-    Acc.
+    lists:foldl(fun({K, V}, R) ->
+                        setelement(dict:fetch(K, IndexedNames), R, V)
+                end,
+                Record,
+                proplists:unfold(Props)).
+    
