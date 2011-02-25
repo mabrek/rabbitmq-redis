@@ -44,10 +44,12 @@ handle_cast(init, State = #state{config = Config}) ->
         Method <- resource_declarations(
                     proplists:get_value(declarations, RabbitConfig))],
 
-    PublishFields = set_fields(
-                proplists:get_value(publish_fields, RabbitConfig),
-                record_info(fields, 'basic.publish'),
-                #'basic.publish'{}),
+    PublishFields = fun(Method) ->
+                            set_fields(
+                              proplists:get_value(publish_fields, RabbitConfig),
+                              record_info(fields, 'basic.publish'),
+                              Method)
+                    end,
     PublishProperties = set_fields(
                 proplists:get_value(publish_properties, RabbitConfig),
                 record_info(fields, 'P_basic'),
@@ -95,6 +97,9 @@ resource_declarations([{Method, Props} | Rest], Acc) ->
 
 resource_declarations([], Acc) ->
     Acc.
+
+set_fields(undefined, _, Record) ->
+    Record;
 
 set_fields(Props, Names, Record) ->
     {IndexedNames, _Idx} = lists:foldl(
