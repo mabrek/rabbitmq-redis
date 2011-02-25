@@ -1,6 +1,6 @@
 -module(rabbit_redis_subscribe).
 
--include("amqp_client.hrl").
+-include_lib("amqp_client/include/amqp_client.hrl").
 
 -behaviour(gen_server2).
 
@@ -37,8 +37,11 @@ handle_cast(init, State = #state{config = Config}) ->
     RabbitConfig = proplists:get_value(rabbit, Config),
     {ok, RabbitConnection} = amqp_connection:start(direct),
     link(RabbitConnection),
+
     {ok, RabbitChannel} = amqp_connection:open_channel(RabbitConnection),
-    resource_declarations(proplists:get_value(declarations, RabbitConfig),
+    [amqp_channel:call(Method, RabbitChannel) ||
+        Method <- resource_declarations(
+                    proplists:get_value(declarations, RabbitConfig))],
 
     {noreply, State#state{redis_connection = RedisConnection, 
                           rabbit_connection = RabbitConnection,
@@ -46,11 +49,11 @@ handle_cast(init, State = #state{config = Config}) ->
 
 handle_info({'EXIT', RabbitConnection, Reason}, 
             State = #state{rabbit_connection = RabbitConnection}) ->
-    {stop, {rabbit_connection_died, Reason}, State).
+    {stop, {rabbit_connection_died, Reason}, State};
 
 handle_info({'EXIT', RedisConnection, Reason},
             State = #state{redis_connection = RedisConnection}) ->
-    {stop, {redis_connection_died, Reason}, State).
+    {stop, {redis_connection_died, Reason}, State}.
 
 terminate(_Reason, State) ->
     catch erldis:quit(State#state.redis_connection),
@@ -63,18 +66,25 @@ code_change(_OldVsn, State, _Extra) ->
 
 %% internals
 
-resource_declarations(Methods) when is_list(Methods) ->
-    resource_declarations(Methods, []);
+resource_declarations(Methods) ->
+    resource_declarations_acc(Methods, []).
 
-resource_declarations([{Method, Props} | Rest], Acc) ->
+resource_declarations_acc([{Method, Props} | Rest], Acc) ->
     Names = rabbit_framing_amqp_0_9_1:method_fieldnames(Method),
+    {IndexedNames, _Idx} = lists:foldl(
+                             fun(Name, {Dict, Idx}) ->
+                                     {dict:append(Name, Idx, Dict),
+                                      Idx + 1}
+                                     end,
+                             {dict:new(), 2},
+                             Names),
     Declaration = lists:foldl(
                     fun({K, V}, R) ->
-                            setelement(, R, V),
+                            setelement(dict:fetch(K, IndexedNames), R, V)
                             end,
                     rabbit_framing_amqp_0_9_1:method_record(Method),
                     Props),
-    resource_declarations(Rest, [Declaration | Acc]);
+    resource_declarations_acc(Rest, [Declaration | Acc]);
 
-resource_declatations([], Acc) ->
+resource_declarations_acc([], Acc) ->
     Acc.

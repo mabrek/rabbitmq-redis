@@ -1,6 +1,6 @@
 -module(rabbit_redis_test).
 
--include("amqp_client.hrl").
+-include_lib("amqp_client/include/amqp_client.hrl").
 
 -export([test/0]).
 
@@ -13,21 +13,18 @@ test() ->
     redis_only_pubsub(),
     % TODO start/stop without config
     application:set_env(rabbit_redis, bridges,
-                        [
-                         [{type, subscribe},
+                        [[{type, subscribe},
                           {redis, [{host, ?REDIS_HOST},
                                    {port, ?REDIS_PORT},
                                    {channels, [?CHANNEL]}
                                   ]},
-                          {rabbit, [{declarations, ['exchange.declare',
+                          {rabbit, [{declarations, {'exchange.declare',
                                                     [{exchange, ?EXCHANGE},
                                                      {type, <<"direct">>},
                                                      durable
-                                                    ]]},
+                                                    ]}},
                                     {publish_fields, [{exchange, ?EXCHANGE}]}
-                                   ]}
-                        ]
-                       ),
+                                   ]}]]),
     ok = application:start(rabbit_redis),
     receive after 1000 -> ok end,
     ok = application:stop(rabbit_redis).
