@@ -66,10 +66,10 @@ code_change(_OldVsn, State, _Extra) ->
 
 %% internals
 
-resource_declarations(Methods) ->
-    resource_declarations_acc(Methods, []).
+resource_declarations(Declarations) ->
+    resource_declarations(Declarations, []).
 
-resource_declarations_acc([{Method, Props} | Rest], Acc) ->
+resource_declarations([{Method, Props} | Rest], Acc) ->
     Names = rabbit_framing_amqp_0_9_1:method_fieldnames(Method),
     {IndexedNames, _Idx} = lists:foldl(
                              fun(Name, {Dict, Idx}) ->
@@ -84,7 +84,7 @@ resource_declarations_acc([{Method, Props} | Rest], Acc) ->
                             end,
                     rabbit_framing_amqp_0_9_1:method_record(Method),
                     Props),
-    resource_declarations_acc(Rest, [Declaration | Acc]);
+    resource_declarations(Rest, [Declaration | Acc]);
 
-resource_declarations_acc([], Acc) ->
+resource_declarations([], Acc) ->
     Acc.

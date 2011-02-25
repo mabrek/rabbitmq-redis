@@ -18,11 +18,11 @@ test() ->
                                    {port, ?REDIS_PORT},
                                    {channels, [?CHANNEL]}
                                   ]},
-                          {rabbit, [{declarations, {'exchange.declare',
+                          {rabbit, [{declarations, [{'exchange.declare',
                                                     [{exchange, ?EXCHANGE},
                                                      {type, <<"direct">>},
                                                      durable
-                                                    ]}},
+                                                    ]}]},
                                     {publish_fields, [{exchange, ?EXCHANGE}]}
                                    ]}]]),
     ok = application:start(rabbit_redis),
