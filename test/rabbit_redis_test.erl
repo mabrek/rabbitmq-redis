@@ -6,6 +6,7 @@
 
 test() ->
     redis_only_pubsub(),
+    % TODO start/stop without config
     application:set_env(rabbit_redis, bridges,
                         [
                          {subscribe, [<<"channel">>], <<"test_exchange">>}
