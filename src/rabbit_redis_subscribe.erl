@@ -11,7 +11,8 @@
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
          terminate/2, code_change/3]).
 
--record(state, {redis_connection, rabbit_connection, rabbit_channel, config}).
+-record(state, {redis_connection, rabbit_connection, rabbit_channel, 
+                publish_fields, publish_properties, config}).
 
 start_link(Config) ->
     gen_server2:start_link({local, ?MODULE}, ?MODULE, Config, []).
@@ -43,11 +44,26 @@ handle_cast(init, State = #state{config = Config}) ->
         Method <- resource_declarations(
                     proplists:get_value(declarations, RabbitConfig))],
 
+    PublishFields = set_fields(
+                proplists:get_value(publish_fields, RabbitConfig),
+                record_info(fields, 'basic.publish'),
+                #'basic.publish'{}),
+    PublishProperties = set_fields(
+                proplists:get_value(publish_properties, RabbitConfig),
+                record_info(fields, 'P_basic'),
+                #'P_basic'{}),
     {noreply, State#state{redis_connection = RedisConnection, 
                           rabbit_connection = RabbitConnection,
-                          rabbit_channel = RabbitChannel}}.
+                          rabbit_channel = RabbitChannel,
+                          publish_fields = PublishFields,
+                          publish_properties = PublishProperties}}.
 
 handle_info({message, Channel, Payload}, State) ->
+    Method = #'basic.publish'{routing_key = Channel},
+    Method1 = (State#state.publish_fields)(Method),
+    Message = #amqp_msg{payload = Payload,
+                        props = State#state.publish_properties},
+    amqp_channel:call(State#state.rabbit_channel, Method1, Message),
     {noreply, State};
 
 handle_info({'EXIT', RabbitConnection, Reason}, 
@@ -93,4 +109,3 @@ set_fields(Props, Names, Record) ->
                 end,
                 Record,
                 proplists:unfold(Props)).
-    
