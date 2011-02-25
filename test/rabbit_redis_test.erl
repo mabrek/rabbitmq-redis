@@ -70,13 +70,14 @@ subscribe() ->
     end,
 
     {ok, Redis} = erldis:connect(?REDIS_HOST, ?REDIS_PORT),
-    1 = erldis:publish(Redis, ?CHANNEL, <<1234>>),
+    1 = erldis:publish(Redis, ?CHANNEL, <<"payload">>),
     erldis:quit(Redis),
 
     receive
         {#'basic.deliver'{ consumer_tag = CTag, exchange = ?EXCHANGE,
-                         routing_key = ?CHANNEL}, 
-         #amqp_msg{ payload = <<1234>> }} -> ok
+                           routing_key = ?CHANNEL}, 
+         #amqp_msg{ payload = <<"payload">> }} -> 
+            ok
     after ?TIMEOUT -> throw(timeout)
     end,
 
