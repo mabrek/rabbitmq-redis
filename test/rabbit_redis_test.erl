@@ -2,7 +2,7 @@
 
 -include_lib("amqp_client/include/amqp_client.hrl").
 
--export([test/0]).
+-compile(export_all).
 
 -define(REDIS_HOST, "localhost").
 -define(REDIS_PORT, 6379).
@@ -13,13 +13,14 @@
 test() ->
     redis_only_pubsub(),
     % TODO start/stop without config
-    subscribe().
+    subscribe(),
+    ok.
 
 redis_only_pubsub() ->
-    {ok, Publisher} = erldis_client:start_link(?REDIS_HOST, ?REDIS_PORT),
-    {ok, Subscriber} = erldis_client:start_link(?REDIS_HOST, ?REDIS_PORT),
+    {ok, Publisher} = erldis:connect(?REDIS_HOST, ?REDIS_PORT),
+    {ok, Subscriber} = erldis:connect(?REDIS_HOST, ?REDIS_PORT),
     Payload = <<"payload">>,
-    erldis:subscribe(Subscriber, ?CHANNEL, self()),
+    erldis:subscribe(Subscriber, ?CHANNEL, self()), % TODO 1 =
     1 = erldis:publish(Publisher, ?CHANNEL, Payload),
     receive
         {message, Channel, Payload} -> 
@@ -29,7 +30,10 @@ redis_only_pubsub() ->
     after
         ?TIMEOUT ->
             throw(timeout)
-    end.
+    end,
+    erldis:quit(Publisher),
+    erldis:quit(Subscriber),
+    ok.
 
 subscribe() ->
     application:set_env(rabbit_redis, bridges,
@@ -64,7 +68,7 @@ subscribe() ->
     after ?TIMEOUT -> throw(timeout)
     end,
 
-    {ok, Redis} = erldis_client:start_link(?REDIS_HOST, ?REDIS_PORT),
+    {ok, Redis} = erldis:connect(?REDIS_HOST, ?REDIS_PORT),
     1 = erldis:publish(Redis, ?CHANNEL, <<1234>>),
     erldis:quit(Redis),
 
