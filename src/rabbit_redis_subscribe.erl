@@ -39,7 +39,7 @@ handle_cast(init, State = #state{config = Config}) ->
     link(RabbitConnection),
 
     {ok, RabbitChannel} = amqp_connection:open_channel(RabbitConnection),
-    [amqp_channel:call(Method, RabbitChannel) ||
+    [amqp_channel:call(RabbitChannel, Method) ||
         Method <- resource_declarations(
                     proplists:get_value(declarations, RabbitConfig))],
 
@@ -83,7 +83,7 @@ resource_declarations([{Method, Props} | Rest], Acc) ->
                             setelement(dict:fetch(K, IndexedNames), R, V)
                             end,
                     rabbit_framing_amqp_0_9_1:method_record(Method),
-                    Props),
+                    proplists:unfold(Props)),
     resource_declarations(Rest, [Declaration | Acc]);
 
 resource_declarations([], Acc) ->
