@@ -12,7 +12,7 @@
          terminate/2, code_change/3]).
 
 -record(state, {redis_connection, rabbit_connection, rabbit_channel, 
-                publish_fields, publish_properties, config}).
+                set_publish_fields, publish_properties, config}).
 
 start_link(Config) ->
     gen_server2:start_link({local, ?MODULE}, ?MODULE, Config, []).
@@ -22,10 +22,7 @@ init(Config) ->
     {ok, #state{config = Config}}.
 
 handle_call(ping, _From, State) ->
-    {reply, pong, State};
-
-handle_call(_Request, _From, State) ->
-    {noreply, State}.
+    {reply, pong, State}.
 
 handle_cast(init, State = #state{config = Config}) ->
     process_flag(trap_exit, true),
@@ -41,18 +38,17 @@ handle_cast(init, State = #state{config = Config}) ->
     RabbitConfig = proplists:get_value(rabbit, Config),
     {ok, RabbitConnection} = amqp_connection:start(direct),
     link(RabbitConnection),
-
     {ok, RabbitChannel} = amqp_connection:open_channel(RabbitConnection),
     [amqp_channel:call(RabbitChannel, Method) ||
         Method <- resource_declarations(
                     proplists:get_value(declarations, RabbitConfig))],
 
-    PublishFields = fun(Method) ->
-                            set_fields(
-                              proplists:get_value(publish_fields, RabbitConfig),
-                              record_info(fields, 'basic.publish'),
-                              Method)
-                    end,
+    PublishFields = proplists:get_value(publish_fields, RabbitConfig),
+    SetPublishFields = fun(Method) ->
+                            set_fields(PublishFields,
+                                       record_info(fields, 'basic.publish'),
+                                       Method)
+                       end,
     PublishProperties = set_fields(
                 proplists:get_value(publish_properties, RabbitConfig),
                 record_info(fields, 'P_basic'),
@@ -60,12 +56,12 @@ handle_cast(init, State = #state{config = Config}) ->
     {noreply, State#state{redis_connection = RedisConnection, 
                           rabbit_connection = RabbitConnection,
                           rabbit_channel = RabbitChannel,
-                          publish_fields = PublishFields,
+                          set_publish_fields = SetPublishFields,
                           publish_properties = PublishProperties}}.
 
 handle_info({message, Channel, Payload}, State) ->
     Method = #'basic.publish'{routing_key = Channel},
-    Method1 = (State#state.publish_fields)(Method),
+    Method1 = (State#state.set_publish_fields)(Method),
     Message = #amqp_msg{payload = Payload,
                         props = State#state.publish_properties},
     amqp_channel:call(State#state.rabbit_channel, Method1, Message),
