@@ -17,8 +17,7 @@ start_link(Bridges) ->
         transient,
         16#ffffffff,
         worker,
-        [rabbit_redis_worker]
-       } || Config <- Bridges]).
+        [rabbit_redis_worker]} || Config <- Bridges]).
 
 init(Childs) ->
     % TODO delayed restart
