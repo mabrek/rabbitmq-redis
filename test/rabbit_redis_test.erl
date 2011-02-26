@@ -23,7 +23,7 @@ redis_only_pubsub() ->
     erldis:subscribe(Subscriber, ?CHANNEL, self()), % TODO 1 =
     1 = erldis:publish(Publisher, ?CHANNEL, Payload),
     receive
-        {message, Channel, Payload} -> 
+        {message, ?CHANNEL, Payload} -> 
             ok;
         BadResult ->
             throw({bad_result, BadResult})
@@ -50,7 +50,7 @@ subscribe() ->
                                    ]}]]),
 
     ok = application:start(rabbit_redis),
-    pong = gen_server2:call(rabbit_redis_subscribe, ping), % ensure started
+    pong = gen_server2:call(rabbit_redis_worker, ping), % ensure started
 
     {ok, Rabbit} = amqp_connection:start(direct),
     {ok, Channel} = amqp_connection:open_channel(Rabbit),
