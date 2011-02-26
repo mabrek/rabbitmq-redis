@@ -1,4 +1,4 @@
--module(rabbit_redis_subscribe).
+-module(rabbit_redis_worker).
 
 -include_lib("amqp_client/include/amqp_client.hrl").
 
@@ -11,6 +11,7 @@
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
          terminate/2, code_change/3]).
 
+%TODO rename to worker state, extract to hrl
 -record(state, {redis_connection, rabbit_connection, rabbit_channel, 
                 set_publish_fields, publish_properties, config}).
 

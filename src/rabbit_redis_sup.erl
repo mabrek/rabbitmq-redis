@@ -12,12 +12,12 @@ start_link(Bridges) ->
     supervisor2:start_link(
       {local, ?MODULE}, 
       ?MODULE, 
-      [{rabbit_redis_subscribe,
-        {rabbit_redis_subscribe, start_link, [Config]},
+      [{rabbit_redis_worker,
+        {rabbit_redis_worker, start_link, [Config]},
         transient,
         16#ffffffff,
         worker,
-        [rabbit_redis_subscribe]
+        [rabbit_redis_worker]
        } || Config <- Bridges]).
 
 init(Childs) ->
