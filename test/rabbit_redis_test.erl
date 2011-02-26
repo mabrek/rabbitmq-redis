@@ -15,16 +15,16 @@ test() ->
     redis_only_pubsub(),
     empty_config(),
     subscribe(),
+    publish(),
     ok.
 
 redis_only_pubsub() ->
     {ok, Publisher} = erldis:connect(?REDIS_HOST, ?REDIS_PORT),
     {ok, Subscriber} = erldis:connect(?REDIS_HOST, ?REDIS_PORT),
-    Payload = <<"payload">>,
     erldis:subscribe(Subscriber, ?CHANNEL, self()),
-    1 = erldis:publish(Publisher, ?CHANNEL, Payload),
+    1 = erldis:publish(Publisher, ?CHANNEL, <<"Payload">>),
     receive
-        {message, ?CHANNEL, Payload} -> 
+        {message, ?CHANNEL, <<"Payload">>} ->
             ok;
         BadResult ->
             throw({bad_result, BadResult})
@@ -80,16 +80,26 @@ subscribe_fun(Channel, Redis) ->
 
 publish() ->
     with_configuration([[{type, publish},
-                       {redis, [{host, ?REDIS_HOST},
-                                {port, ?REDIS_PORT}]},
-                       {rabbit, [{declarations, [{'queue.declare', 
-                                                  [{queue = ?QUEUE},
-                                                   auto_delete]}]},
-                                 {queue, ?QUEUE}]}]], 
-                     fun publish_fun/0).
+                         {redis, [{host, ?REDIS_HOST},
+                                  {port, ?REDIS_PORT}]},
+                         {rabbit, [{declarations, [{'queue.declare', 
+                                                    [{queue = ?QUEUE},
+                                                     auto_delete]}]},
+                                   {queue, ?QUEUE}]}]], 
+                       fun() -> with_rabbit_redis(fun publish_fun/2) end).
 
-publish_fun() ->
-    ok.
+publish_fun(Channel, Redis) ->
+    erldis:subscribe(Redis, ?QUEUE, self()),
+    #'queue.declare_ok'{ queue = ?QUEUE } = 
+        amqp_channel:call(Channel, #'queue.declare'{queue = ?QUEUE, 
+                                                    auto_delete = true}),
+    Message = #amqp_msg{ payload = <<"foo">>},
+    ok = amqp_channel:call(Channel,
+                           #'basic.publish'{ routing_key = ?QUEUE},
+                           Message),
+    receive {message, ?CHANNEL, <<"foo">>} -> ok
+    after ?TIMEOUT -> throw(timeout)
+    end.
 
 with_configuration(Config, Fun) ->
     application:set_env(rabbit_redis, bridges, Config),
