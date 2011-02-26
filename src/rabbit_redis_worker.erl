@@ -1,7 +1,4 @@
 -module(rabbit_redis_worker).
-
--include_lib("amqp_client/include/amqp_client.hrl").
-
 -behaviour(gen_server2).
 
 %% API
@@ -11,9 +8,8 @@
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
          terminate/2, code_change/3]).
 
-%TODO extract to hrl
--record(worker_state, {redis_connection, rabbit_connection, rabbit_channel, 
-                set_publish_fields, publish_properties, config}).
+-include_lib("amqp_client/include/amqp_client.hrl").
+-include("rabbit_redis.hrl").
 
 start_link(Config) ->
     gen_server2:start_link({local, ?MODULE}, ?MODULE, Config, []).
