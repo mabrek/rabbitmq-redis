@@ -49,7 +49,7 @@ subscribe() ->
                                                    auto_delete
                                                   ]}]},
                                  {publish_fields, [{exchange, ?EXCHANGE}]}]}]],
-                    fun() -> with_rabbit_redis(subscribe_fun/2) end).
+                    fun() -> with_rabbit_redis(fun subscribe_fun/2) end).
 
 subscribe_fun(Channel, Redis) ->
     pong = gen_server2:call(rabbit_redis_worker, ping), % ensure started
@@ -106,4 +106,3 @@ with_rabbit_redis(Fun) ->
     amqp_channel:close(Channel),
     amqp_connection:close(Rabbit),
     ok.
-
