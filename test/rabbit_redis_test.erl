@@ -12,7 +12,7 @@
 
 test() ->
     redis_only_pubsub(),
-    % TODO start/stop without config
+    empty_start_stop(),
     subscribe(),
     ok.
 
@@ -34,6 +34,11 @@ redis_only_pubsub() ->
     erldis:quit(Publisher),
     erldis:quit(Subscriber),
     ok.
+
+empty_start_stop() ->
+    application:unset_env(rabbit_redis, bridges),
+    ok = application:start(rabbit_redis),
+    ok = application:stop(rabbit_redis).
 
 subscribe() ->
     application:set_env(rabbit_redis, bridges,
