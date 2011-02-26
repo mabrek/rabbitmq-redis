@@ -97,7 +97,7 @@ publish_fun(Channel, Redis) ->
     ok = amqp_channel:call(Channel,
                            #'basic.publish'{ routing_key = ?QUEUE},
                            Message),
-    receive {message, ?CHANNEL, <<"foo">>} -> ok
+    receive {message, ?QUEUE, <<"foo">>} -> ok
     after ?TIMEOUT -> throw(timeout)
     end.
 
