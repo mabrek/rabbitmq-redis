@@ -35,7 +35,7 @@ handle_cast(init, State = #worker_state{config = Config}) ->
     {ok, RabbitChannel} = amqp_connection:open_channel(RabbitConnection),
     [amqp_channel:call(RabbitChannel, Method) ||
         Method <- resource_declarations(
-                    proplists:get_value(declarations, RabbitConfig))],
+                    proplists:get_value(declarations, RabbitConfig, []))],
 
     BridgeModule = module_for_type(proplists:get_value(type, Config)),
     State1 = BridgeModule:init(
