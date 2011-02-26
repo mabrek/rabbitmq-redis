@@ -20,7 +20,7 @@ redis_only_pubsub() ->
     {ok, Publisher} = erldis:connect(?REDIS_HOST, ?REDIS_PORT),
     {ok, Subscriber} = erldis:connect(?REDIS_HOST, ?REDIS_PORT),
     Payload = <<"payload">>,
-    erldis:subscribe(Subscriber, ?CHANNEL, self()), % TODO 1 =
+    erldis:subscribe(Subscriber, ?CHANNEL, self()),
     1 = erldis:publish(Publisher, ?CHANNEL, Payload),
     receive
         {message, ?CHANNEL, Payload} -> 
