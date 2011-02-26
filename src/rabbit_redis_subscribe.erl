@@ -37,5 +37,5 @@ handle_info({message, Channel, Payload},
                                     publish_properties = PublishProperties}}) ->
     Method = (SetPublishFields)(#'basic.publish'{routing_key = Channel}),
     Message = #amqp_msg{payload = Payload, props = PublishProperties},
-    amqp_channel:call(State#worker_state.rabbit_channel, Method, Message),
+    ok = amqp_channel:call(State#worker_state.rabbit_channel, Method, Message),
     {noreply, State}.
