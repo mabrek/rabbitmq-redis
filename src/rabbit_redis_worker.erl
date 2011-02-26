@@ -67,7 +67,8 @@ code_change(_OldVsn, State, _Extra) ->
 
 %% internals
 
-module_for_type(subscribe) -> rabbit_redis_subscribe.
+module_for_type(subscribe) -> rabbit_redis_subscribe;
+module_for_type(publish) -> rabbit_redis_publish.
 
 resource_declarations(Declarations) ->
     resource_declarations(Declarations, []).
