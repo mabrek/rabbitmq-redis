@@ -12,7 +12,7 @@
 
 test() ->
     redis_only_pubsub(),
-    empty_start_stop(),
+    empty_config(),
     subscribe(),
     ok.
 
@@ -35,26 +35,24 @@ redis_only_pubsub() ->
     erldis:quit(Subscriber),
     ok.
 
-empty_start_stop() ->
-    application:unset_env(rabbit_redis, bridges),
-    ok = application:start(rabbit_redis),
-    ok = application:stop(rabbit_redis).
+empty_config() ->
+    with_application([], fun() -> ok end).
 
 subscribe() ->
-    application:set_env(rabbit_redis, bridges,
-                        [[{type, subscribe},
-                          {redis, [{host, ?REDIS_HOST},
-                                   {port, ?REDIS_PORT},
-                                   {channels, [?CHANNEL]}
-                                  ]},
-                          {rabbit, [{declarations, [{'exchange.declare',
-                                                     [{exchange, ?EXCHANGE},
-                                                      auto_delete
-                                                     ]}]},
-                                    {publish_fields, [{exchange, ?EXCHANGE}]}
-                                   ]}]]),
+    with_application([[{type, subscribe},
+                       {redis, [{host, ?REDIS_HOST},
+                                {port, ?REDIS_PORT},
+                                {channels, [?CHANNEL]}
+                               ]},
+                       {rabbit, [{declarations, [{'exchange.declare',
+                                                  [{exchange, ?EXCHANGE},
+                                                   auto_delete
+                                                  ]}]},
+                                 {publish_fields, [{exchange, ?EXCHANGE}]}
+                                ]}]],
+                    fun subscribe_fun/0).
 
-    ok = application:start(rabbit_redis),
+subscribe_fun() ->
     pong = gen_server2:call(rabbit_redis_worker, ping), % ensure started
 
     {ok, Rabbit} = amqp_connection:start(direct),
@@ -88,5 +86,14 @@ subscribe() ->
 
     amqp_channel:close(Channel),
     amqp_connection:close(Rabbit),
+    ok.
 
+publish() ->
+    ok.
+
+with_application(Config, Fun) ->
+    application:set_env(rabbit_redis, bridges, Config),
+    ok = application:start(rabbit_redis),
+    Fun(),
     ok = application:stop(rabbit_redis).
+
