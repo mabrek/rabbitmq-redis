@@ -83,9 +83,9 @@ publish() ->
                          {redis, [{host, ?REDIS_HOST},
                                   {port, ?REDIS_PORT}]},
                          {rabbit, [{declarations, [{'queue.declare', 
-                                                    [{queue = ?QUEUE},
+                                                    [{queue, ?QUEUE},
                                                      auto_delete]}]},
-                                   {queue, ?QUEUE}]}]], 
+                                   {queue, ?QUEUE}]}]],
                        fun() -> with_rabbit_redis(fun publish_fun/2) end).
 
 publish_fun(Channel, Redis) ->
