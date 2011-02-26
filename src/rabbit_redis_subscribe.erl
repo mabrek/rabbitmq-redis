@@ -1,12 +1,13 @@
 -module(rabbit_redis_subscribe).
 
--include(rabbit_redis.hrl).
+-include_lib("amqp_client/include/amqp_client.hrl").
+-include("rabbit_redis.hrl").
 
 -record(subscribe_state, {set_publish_fields, publish_properties}).
 
 -export([init/1, handle_info/2]).
 
-init(WorkerState = #worker_state{bridge_module = ?MODULE,
+init(State = #worker_state{bridge_module = ?MODULE,
                                  redis_connection = RedisConnection,
                                  config = Config}) ->
     % TODO navigate subproperties via rabbit_redis_util
@@ -37,4 +38,4 @@ handle_info({message, Channel, Payload},
     Method = (SetPublishFields)(#'basic.publish'{routing_key = Channel}),
     Message = #amqp_msg{payload = Payload, props = PublishProperties},
     amqp_channel:call(State#worker_state.rabbit_channel, Method, Message),
-    {noreply, State};
+    {noreply, State}.

@@ -1,6 +1,6 @@
 -module(rabbit_redis_util).
 
--export([set_fields]).
+-export([set_fields/3]).
 
 set_fields(undefined, _, Record) ->
     Record;

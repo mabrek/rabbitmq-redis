@@ -8,7 +8,6 @@
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
          terminate/2, code_change/3]).
 
--include_lib("amqp_client/include/amqp_client.hrl").
 -include("rabbit_redis.hrl").
 
 start_link(Config) ->
@@ -42,9 +41,9 @@ handle_cast(init, State = #worker_state{config = Config}) ->
     State1 = BridgeModule:init(
                State#worker_state{redis_connection = RedisConnection, 
                                   rabbit_connection = RabbitConnection,
-                                  rabbit_channel = RabbitChannel
+                                  rabbit_channel = RabbitChannel,
                                   bridge_module = BridgeModule}),
-    {noreply, State1}}.
+    {noreply, State1}.
 
 handle_info({'EXIT', RabbitConnection, Reason}, 
             State = #worker_state{rabbit_connection = RabbitConnection}) ->
