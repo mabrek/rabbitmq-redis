@@ -11,8 +11,8 @@
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
          terminate/2, code_change/3]).
 
-%TODO rename to worker state, extract to hrl
--record(state, {redis_connection, rabbit_connection, rabbit_channel, 
+%TODO extract to hrl
+-record(worker_state, {redis_connection, rabbit_connection, rabbit_channel, 
                 set_publish_fields, publish_properties, config}).
 
 start_link(Config) ->
@@ -20,12 +20,12 @@ start_link(Config) ->
 
 init(Config) ->
     gen_server2:cast(self(), init),
-    {ok, #state{config = Config}}.
+    {ok, #worker_state{config = Config}}.
 
 handle_call(ping, _From, State) ->
     {reply, pong, State}.
 
-handle_cast(init, State = #state{config = Config}) ->
+handle_cast(init, State = #worker_state{config = Config}) ->
     process_flag(trap_exit, true),
 
     RedisConfig = proplists:get_value(redis, Config),
@@ -54,7 +54,7 @@ handle_cast(init, State = #state{config = Config}) ->
                 proplists:get_value(publish_properties, RabbitConfig),
                 record_info(fields, 'P_basic'),
                 #'P_basic'{}),
-    {noreply, State#state{redis_connection = RedisConnection, 
+    {noreply, State#worker_state{redis_connection = RedisConnection, 
                           rabbit_connection = RabbitConnection,
                           rabbit_channel = RabbitChannel,
                           set_publish_fields = SetPublishFields,
@@ -62,24 +62,24 @@ handle_cast(init, State = #state{config = Config}) ->
 
 handle_info({message, Channel, Payload}, State) ->
     Method = #'basic.publish'{routing_key = Channel},
-    Method1 = (State#state.set_publish_fields)(Method),
+    Method1 = (State#worker_state.set_publish_fields)(Method),
     Message = #amqp_msg{payload = Payload,
-                        props = State#state.publish_properties},
-    amqp_channel:call(State#state.rabbit_channel, Method1, Message),
+                        props = State#worker_state.publish_properties},
+    amqp_channel:call(State#worker_state.rabbit_channel, Method1, Message),
     {noreply, State};
 
 handle_info({'EXIT', RabbitConnection, Reason}, 
-            State = #state{rabbit_connection = RabbitConnection}) ->
+            State = #worker_state{rabbit_connection = RabbitConnection}) ->
     {stop, {rabbit_connection_died, Reason}, State};
 
 handle_info({'EXIT', RedisConnection, Reason},
-            State = #state{redis_connection = RedisConnection}) ->
+            State = #worker_state{redis_connection = RedisConnection}) ->
     {stop, {redis_connection_died, Reason}, State}.
 
 terminate(_Reason, State) ->
-    catch erldis:quit(State#state.redis_connection),
-    catch amqp_channel:close(State#state.rabbit_channel),
-    catch amqp_connection:close(State#state.rabbit_connection),
+    catch erldis:quit(State#worker_state.redis_connection),
+    catch amqp_channel:close(State#worker_state.rabbit_channel),
+    catch amqp_connection:close(State#worker_state.rabbit_connection),
     ok.
 
 code_change(_OldVsn, State, _Extra) ->
