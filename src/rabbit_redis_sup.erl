@@ -12,7 +12,7 @@ start_link(Bridges) ->
     supervisor2:start_link(
       {local, ?MODULE}, 
       ?MODULE, 
-      [{rabbit_redis_worker,
+      [{erlang:md5(term_to_binary(Config)),
         {rabbit_redis_worker, start_link, [Config]},
         transient,
         16#ffffffff,
