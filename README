@@ -1,5 +1,23 @@
-Bridge between RabbitMQ and Redis.
-Implemented as RabbitMQ plugin.
+Experimental bridge between RabbitMQ and Redis implemented as a RabbitMQ plugin.
 
-See build instructions at:
+Introduction
+------------
+
+This plugin moves messages between RabbitMQ and Redis Pub/Sub (http://redis.io/topics/pubsub).
+It was inspired by RabbitMQ-shovel and shares the same idea with the exception 
+that it connects Redis pub/sub channels to RabbitMQ queues or exchanges.
+
+For building see instructions at:
 http://www.rabbitmq.com/plugin-development.html
+
+Configuration
+-------------
+
+The plugin is configured using rabbitmq.config file that has a structure 
+like this:
+
+[{rabbit, [rabbit-settings]},
+ {rabbit_redis, [rabbitmq-redis-plugin-settings]}
+].
+
+Example of rabbitmq.config with rabbitmq-redis plugin:
