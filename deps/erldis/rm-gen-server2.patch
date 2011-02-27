@@ -1,3 +1,16 @@
+diff --git a/ebin/erldis.app b/ebin/erldis.app
+index 5dd58a1..3e439b7 100644
+--- a/ebin/erldis.app
++++ b/ebin/erldis.app
+@@ -6,7 +6,7 @@
+ 	{applications, [kernel, stdlib]},
+ 	{modules, [
+ 		erldis_client, erldis, erldis_proto, erldis_app, erldis_sup,
+-		erldis_sets, erldis_dict, erldis_list, gen_server2, erldis_sync_client,
++		erldis_sets, erldis_dict, erldis_list, erldis_sync_client,
+ 		erldis_binaries
+ 	]},
+ 	{env, [{host, "localhost"}, {port, 6379}, {timeout, 500}]}
 diff --git a/src/gen_server2.erl b/src/gen_server2.erl
 deleted file mode 100644
 index e2f8d6e..0000000
