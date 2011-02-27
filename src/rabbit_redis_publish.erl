@@ -9,7 +9,8 @@ init(State = #worker_state{bridge_module = ?MODULE,
                            rabbit_channel = Channel,
                            config = Config}) ->
     Queue = proplists:get_value(queue, proplists:get_value(rabbit, Config)),
-    Method = #'basic.consume'{ queue = Queue, no_ack = true },
+    % TODO configure acks, qos, transactions
+    Method = #'basic.consume'{queue = Queue, no_ack = true},
     #'basic.consume_ok'{} = amqp_channel:subscribe(Channel, Method, self()),
     State.
 
@@ -18,6 +19,6 @@ handle_info(#'basic.consume_ok'{}, State) ->
 
 handle_info({#'basic.deliver'{routing_key = RedisChannel},
              #amqp_msg{payload = Payload}},
-            State = #worker_state{redis_connection = Redis, config = Config}) ->
+            State = #worker_state{redis_connection = Redis}) ->
     erldis:publish(Redis, RedisChannel, Payload),
     {noreply, State}.

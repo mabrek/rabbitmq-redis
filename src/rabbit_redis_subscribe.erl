@@ -17,7 +17,7 @@ init(State = #worker_state{bridge_module = ?MODULE,
 
     RabbitConfig = proplists:get_value(rabbit, Config),
     PublishFields = proplists:get_value(publish_fields, RabbitConfig),
-    SetPublishFields = fun(Method) ->
+    SetPublishFields = fun(Method = #'basic.publish'{}) ->
                                rabbit_redis_util:set_fields(
                                  PublishFields,
                                  record_info(fields, 'basic.publish'),
@@ -31,7 +31,7 @@ init(State = #worker_state{bridge_module = ?MODULE,
       bridge_state = #subscribe_state{set_publish_fields = SetPublishFields,
                                       publish_properties = PublishProperties}}.
 
-handle_info({message, Channel, Payload}, 
+handle_info({message, Channel, Payload},
             State = #worker_state{bridge_state = #subscribe_state{ 
                                     set_publish_fields = SetPublishFields,
                                     publish_properties = PublishProperties}}) ->

@@ -21,17 +21,14 @@ test() ->
 redis_only_pubsub() ->
     {ok, Publisher} = erldis:connect(?REDIS_HOST, ?REDIS_PORT),
     {ok, Subscriber} = erldis:connect(?REDIS_HOST, ?REDIS_PORT),
+
     erldis:subscribe(Subscriber, ?CHANNEL, self()),
     1 = erldis:publish(Publisher, ?CHANNEL, <<"Payload">>),
-    receive
-        {message, ?CHANNEL, <<"Payload">>} ->
-            ok;
-        BadResult ->
-            throw({bad_result, BadResult})
-    after
-        ?TIMEOUT ->
-            throw(timeout)
+
+    receive {message, ?CHANNEL, <<"Payload">>} -> ok
+    after ?TIMEOUT -> throw(timeout)
     end,
+
     erldis:quit(Publisher),
     erldis:quit(Subscriber),
     ok.
@@ -41,39 +38,38 @@ empty_config() ->
 
 subscribe() ->
     with_configuration([[{type, subscribe},
-                       {redis, [{host, ?REDIS_HOST},
-                                {port, ?REDIS_PORT},
-                                {channels, [?CHANNEL]}]},
-                       {rabbit, [{declarations, [{'exchange.declare',
-                                                  [{exchange, ?EXCHANGE},
-                                                   auto_delete
-                                                  ]}]},
-                                 {publish_fields, [{exchange, ?EXCHANGE}]}]}]],
-                    fun() -> with_rabbit_redis(fun subscribe_fun/2) end).
+                         {redis, [{host, ?REDIS_HOST},
+                                  {port, ?REDIS_PORT},
+                                  {channels, [?CHANNEL]}]},
+                         {rabbit, [{declarations, [{'exchange.declare',
+                                                    [{exchange, ?EXCHANGE},
+                                                     auto_delete
+                                                    ]}]},
+                                   {publish_fields, [{exchange, ?EXCHANGE}]}]}]],
+                       fun() -> with_rabbit_redis(fun subscribe_fun/2) end).
 
 subscribe_fun(Channel, Redis) ->
     pong = gen_server2:call(rabbit_redis_worker, ping), % ensure started
 
-    #'queue.declare_ok'{ queue = Q } = 
+    #'queue.declare_ok'{queue = Q} =
         amqp_channel:call(Channel, #'queue.declare'{exclusive = true}),
     #'queue.bind_ok'{} = 
         amqp_channel:call(Channel,
-                          #'queue.bind'{ queue = Q, exchange = ?EXCHANGE,
-                                         routing_key = ?CHANNEL }),
-    #'basic.consume_ok'{ consumer_tag = CTag } = 
+                          #'queue.bind'{queue = Q, exchange = ?EXCHANGE,
+                                         routing_key = ?CHANNEL}),
+    #'basic.consume_ok'{consumer_tag = CTag} = 
         amqp_channel:subscribe(Channel, 
-                               #'basic.consume'{ queue = Q, no_ack = true }, 
+                               #'basic.consume'{queue = Q, no_ack = true}, 
                                self()),
-    receive
-        #'basic.consume_ok'{ consumer_tag = CTag } -> ok
+    receive #'basic.consume_ok'{consumer_tag = CTag} -> ok
     after ?TIMEOUT -> throw(timeout)
     end,
 
     1 = erldis:publish(Redis, ?CHANNEL, <<"payload">>),
 
-    receive {#'basic.deliver'{ consumer_tag = CTag, exchange = ?EXCHANGE,
+    receive {#'basic.deliver'{consumer_tag = CTag, exchange = ?EXCHANGE,
                                routing_key = ?CHANNEL}, 
-             #amqp_msg{ payload = <<"payload">> }} -> ok
+             #amqp_msg{payload = <<"payload">> }} -> ok
     after ?TIMEOUT -> throw(timeout)
     end,
     ok.
@@ -90,12 +86,12 @@ publish() ->
 
 publish_fun(Channel, Redis) ->
     erldis:subscribe(Redis, ?QUEUE, self()),
-    #'queue.declare_ok'{ queue = ?QUEUE } = 
+    #'queue.declare_ok'{queue = ?QUEUE} = 
         amqp_channel:call(Channel, #'queue.declare'{queue = ?QUEUE, 
                                                     auto_delete = true}),
-    Message = #amqp_msg{ payload = <<"foo">>},
+    Message = #amqp_msg{payload = <<"foo">>},
     ok = amqp_channel:call(Channel,
-                           #'basic.publish'{ routing_key = ?QUEUE},
+                           #'basic.publish'{routing_key = ?QUEUE},
                            Message),
     receive {message, ?QUEUE, <<"foo">>} -> ok
     after ?TIMEOUT -> throw(timeout)

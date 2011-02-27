@@ -1,5 +1,6 @@
 #!/usr/bin/env escript
 %% -*- erlang -*-
+%% TODO license from rabbit
 -mode(compile).
 
 main([IncludeDir, ErlDir, EbinDir, TargetFile]) ->

@@ -29,7 +29,7 @@ handle_cast(init, State = #worker_state{config = Config}) ->
                               proplists:get_value(host, RedisConfig),
                               proplists:get_value(port, RedisConfig)),
 
-    RabbitConfig = proplists:get_value(rabbit, Config),
+    RabbitConfig = proplists:get_value(rabbit, Config, []),
     {ok, RabbitConnection} = amqp_connection:start(direct),
     link(RabbitConnection),
     {ok, RabbitChannel} = amqp_connection:open_channel(RabbitConnection),
@@ -53,7 +53,7 @@ handle_info({'EXIT', RedisConnection, Reason},
             State = #worker_state{redis_connection = RedisConnection}) ->
     {stop, {redis_connection_died, Reason}, State};
 
-handle_info(Message, State = #worker_state{ bridge_module = BridgeModule}) ->
+handle_info(Message, State = #worker_state{bridge_module = BridgeModule}) ->
     BridgeModule:handle_info(Message, State).
 
 terminate(_Reason, State) ->
@@ -68,7 +68,7 @@ code_change(_OldVsn, State, _Extra) ->
 %% internals
 
 module_for_type(subscribe) -> rabbit_redis_subscribe;
-module_for_type(publish) -> rabbit_redis_publish.
+module_for_type(publish)   -> rabbit_redis_publish.
 
 resource_declarations(Declarations) ->
     resource_declarations(Declarations, []).

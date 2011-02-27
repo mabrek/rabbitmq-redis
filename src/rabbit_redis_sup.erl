@@ -20,5 +20,5 @@ start_link(Bridges) ->
         [rabbit_redis_worker]} || Config <- Bridges]).
 
 init(Childs) ->
-    % TODO delayed restart
+    % TODO delayed restart in case of failed redis connection
     {ok, {{one_for_one, 10, 10}, Childs}}.
