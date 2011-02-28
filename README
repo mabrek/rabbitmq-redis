@@ -3,7 +3,7 @@ Experimental bridge between RabbitMQ and Redis implemented as a RabbitMQ plugin.
 Introduction
 ------------
 
-This plugin moves messages between RabbitMQ and Redis Pub/Sub (http://redis.io/topics/pubsub).
+This plugin moves messages between RabbitMQ and Redis Pub/Sub (http://redis.io/topics/pubsub) using erldis.
 It was inspired by RabbitMQ-shovel and shares the same idea with the exception 
 that it connects Redis pub/sub channels to RabbitMQ queues or exchanges.
 
