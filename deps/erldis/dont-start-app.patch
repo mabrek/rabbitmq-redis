@@ -1,0 +1,12 @@
+diff --git a/ebin/erldis.app b/ebin/erldis.app
+index 5dd58a1..ca0d2d9 100644
+--- a/ebin/erldis.app
++++ b/ebin/erldis.app
+@@ -2,7 +2,6 @@
+ 	{description, "Erlang Redis application"},
+ 	{vsn, "0.3.2"},
+ 	{registered, [erldis_sup]},
+-	{mod, {erldis_app, []}},
+ 	{applications, [kernel, stdlib]},
+ 	{modules, [
+ 		erldis_client, erldis, erldis_proto, erldis_app, erldis_sup,

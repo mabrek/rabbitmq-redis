@@ -30,7 +30,8 @@ $(LIB_PACKAGE_DIR): $(CHECKOUT_DIR)
 $(CHECKOUT_DIR):
 	git clone $(GIT_UPSTREAM) $@-tmp
 	(cd $@-tmp; git checkout $(REVISION))
-	cd $@-tmp && patch -p1 < ../rm-gen-server2.patch && cd .. && mv $@-tmp $@
+	cd $@-tmp && patch -p1 < ../rm-gen-server2.patch && \
+        patch -p1 < ../dont-start-app.patch && cd .. && mv $@-tmp $@
 
 %.ez: $(LIB_PACKAGE_DIR)
 	$(MAKE) -C $(LIB_PACKAGE_DIR) clean all
