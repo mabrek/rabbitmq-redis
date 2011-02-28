@@ -35,8 +35,11 @@ handle_cast(init, State = #worker_state{config = Config}) ->
     link(RabbitConnection),
     {ok, RabbitChannel} = amqp_connection:open_channel(RabbitConnection),
     [amqp_channel:call(RabbitChannel, Method) ||
-        Method <- resource_declarations(
+        Method <- method_records(
                     proplists:get_value(declarations, RabbitConfig, []))],
+    [amqp_channel:call(RabbitChannel, Method) ||
+        Method <- method_records(
+                    proplists:get_value(bindings, RabbitConfig, []))],
 
     BridgeModule = module_for_type(proplists:get_value(type, Config)),
     State1 = BridgeModule:init(
@@ -71,15 +74,15 @@ code_change(_OldVsn, State, _Extra) ->
 module_for_type(subscribe) -> rabbit_redis_subscribe;
 module_for_type(publish)   -> rabbit_redis_publish.
 
-resource_declarations(Declarations) ->
-    resource_declarations(Declarations, []).
+method_records(Descriptions) ->
+    method_records(Descriptions, []).
 
-resource_declarations([{Method, Props} | Rest], Acc) ->
+method_records([{Method, Props} | Rest], Acc) ->
     Names = rabbit_framing_amqp_0_9_1:method_fieldnames(Method),
     Record = rabbit_framing_amqp_0_9_1:method_record(Method),
-    resource_declarations(
+    method_records(
       Rest, 
       [rabbit_redis_util:set_fields(Props, Names, Record) | Acc]);
 
-resource_declarations([], Acc) ->
+method_records([], Acc) ->
     Acc.
