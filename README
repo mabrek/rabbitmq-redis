@@ -15,9 +15,49 @@ Configuration
 
 The plugin is configured using rabbitmq.config file that has a structure 
 like this:
-
 [{rabbit, [rabbit-settings]},
  {rabbit_redis, [rabbitmq-redis-plugin-settings]}
 ].
 
 Example of rabbitmq.config with rabbitmq-redis plugin:
+[{rabbit_redis, 
+  [{bridges, [
+% subscribes to redis channel "foo" and publishes all received messages 
+% to rabbitmq exchange "quux" with routing_key equals to redis channel ("foo")
+              [{name, subsribe_bridge},
+               {type, subscribe},
+               {redis, [{host, "localhost"},
+                        {port, 6379},
+                        {channels, [<<"foo">>]}]},
+               {rabbit, [{declarations, [{'exchange.declare',
+                                          [{exchange, <<"quux">>},
+                                           auto_delete
+                                          ]}]},
+                         {publish_fields, [{exchange, <<"quux">>}]}]}],
+% consumes messages from rabbitmq queue "foo" and publishes them 
+% to redis channel with name equals to message routing_key
+              [{name, publish_bridge},
+               {type, publish},
+               {redis, [{host, "localhost"},
+                        {port, 6379}]},
+               {rabbit, [{declarations, [{'queue.declare', 
+                                          [{queue, <<"foo">>},
+                                           auto_delete]}]},
+                         {bindings, [{'queue.bind', 
+                                          [{queue, <<"foo">>},
+                                           {exchange, <<"quux">>},
+                                           {routing_key, <<"foo">>}]}]},
+                         {queue, <<"foo">>}]}]
+             ]}]}].
+
+Note that this configuration will create short-circuit for messages 
+in queue "foo" making them bounce between rabbit and redis infinitely.
+
+
+TODO
+----
+
+ - handle redis connection failures
+ - handle rabbit channel flow events
+ - support psubscribe redis command
+ - consider merging with rabbitmq-shovel
