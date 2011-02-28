@@ -37,7 +37,8 @@ empty_config() ->
     with_configuration([], fun() -> ok end).
 
 subscribe() ->
-    with_configuration([[{type, subscribe},
+    with_configuration([[{name, subscribe_bridge},
+                         {type, subscribe},
                          {redis, [{host, ?REDIS_HOST},
                                   {port, ?REDIS_PORT},
                                   {channels, [?CHANNEL]}]},
@@ -49,7 +50,7 @@ subscribe() ->
                        fun() -> with_rabbit_redis(fun subscribe_fun/2) end).
 
 subscribe_fun(Channel, Redis) ->
-    pong = gen_server2:call(rabbit_redis_worker, ping), % ensure started
+    pong = gen_server2:call(subscribe_bridge, ping), % ensure started
 
     #'queue.declare_ok'{queue = Q} =
         amqp_channel:call(Channel, #'queue.declare'{exclusive = true}),
@@ -75,7 +76,8 @@ subscribe_fun(Channel, Redis) ->
     ok.
 
 publish() ->
-    with_configuration([[{type, publish},
+    with_configuration([[{name, publish_bridge},
+                         {type, publish},
                          {redis, [{host, ?REDIS_HOST},
                                   {port, ?REDIS_PORT}]},
                          {rabbit, [{declarations, [{'queue.declare', 

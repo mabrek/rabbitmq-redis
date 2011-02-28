@@ -11,7 +11,8 @@
 -include("rabbit_redis.hrl").
 
 start_link(Config) ->
-    gen_server2:start_link({local, ?MODULE}, ?MODULE, Config, []).
+    gen_server2:start_link(
+      {local, proplists:get_value(name, Config)}, ?MODULE, Config, []).
 
 init(Config) ->
     gen_server2:cast(self(), init),
